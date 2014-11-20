@@ -45,7 +45,7 @@ module PocketApi
     # * offset - Used only with count; start returning from offset position of results
     def retrieve(options={})
       response = request(:get, "/v3/get", {:body => options})
-      response["list"]
+      response
     end
 
     # Add API
