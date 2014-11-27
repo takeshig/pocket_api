@@ -6,6 +6,10 @@ require "pocket_api/connection"
 
 module PocketApi
   class <<self
+    class UnauthorizedError < StandardError; end
+    class ApiLimitError < StandardError; end
+    class MaintenanceError < StandardError; end
+
     attr_accessor :client_key
     attr_accessor :access_token
 
@@ -13,7 +17,7 @@ module PocketApi
       @client_key   = credentials[:client_key]
       @access_token = credentials[:access_token]
     end
-    
+
     # Retrieve API
     # Options:
     # * state
@@ -50,13 +54,13 @@ module PocketApi
 
     # Add API
     # Options:
-    # * title 
+    # * title
     # * tags - comma-seperated list of tags
     # * tweet_id - Twitter tweet_id
     def add(url, options={})
       request(:post, '/v3/add', :body => {:url => url}.merge(options))
     end
-    
+
     # Modify API
     # Actions:
     # * add
@@ -65,7 +69,7 @@ module PocketApi
     # * favorite
     # * unfavorite
     # * delete
-    # * tags_add 
+    # * tags_add
     # * tags_remove
     # * tags_replace
     # * tags_clear
@@ -73,20 +77,36 @@ module PocketApi
     def modify(action, options={})
       request(:post, '/v3/send', :body => {:action => action}.merge(options))
     end
-   
+
     def multi_modify(actions)
       request(:post, '/v3/send', :body => {:action => actions})
     end
-    
+
     def request(method, *arguments)
       arguments[1] ||= {}
       arguments[1][:body] ||= {}
       arguments[1][:body] = MultiJson.dump(arguments[1][:body].merge({:consumer_key => @client_key, :access_token => @access_token}))
       response = Connection.__send__(method.downcase.to_sym, *arguments)
-      raise response.headers["X-Error"] if response.headers["X-Error"]
+
+      error_message = ''
+      error_message = response.headers["X-Error"] if response.headers["X-Error"]
+      case response.code
+      when 200
+        # nothing
+      when 400
+        raise error_message # RuntimeError
+      when 401
+        raise UnauthorizedError.new(error_message)
+      when 403
+        raise ApiLimitError.new(error_message)
+      when 503
+        raise MaintenanceError.new(error_message)
+      else
+        raise error_message
+      end
 
       response.parsed_response
     end
-    
+
   end # <<self
 end
