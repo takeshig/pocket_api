@@ -5,11 +5,11 @@ require "pocket_api/version"
 require "pocket_api/connection"
 
 module PocketApi
-  class <<self
-    class UnauthorizedError < StandardError; end
-    class ApiLimitError < StandardError; end
-    class MaintenanceError < StandardError; end
+  class UnauthorizedError < StandardError; end
+  class ApiLimitError < StandardError; end
+  class MaintenanceError < StandardError; end
 
+  class <<self
     attr_accessor :client_key
     attr_accessor :access_token
 
@@ -96,11 +96,11 @@ module PocketApi
       when 400
         raise error_message # RuntimeError
       when 401
-        raise UnauthorizedError.new(error_message)
+        raise PocketApi::UnauthorizedError.new(error_message)
       when 403
-        raise ApiLimitError.new(error_message)
+        raise PocketApi::ApiLimitError.new(error_message)
       when 503
-        raise MaintenanceError.new(error_message)
+        raise PocketApi::MaintenanceError.new(error_message)
       else
         raise error_message
       end
