@@ -79,7 +79,7 @@ module PocketApi
     end
 
     def multi_modify(actions)
-      request(:post, '/v3/send', :body => {:action => actions})
+      request(:post, '/v3/send', :body => {:actions => actions})
     end
 
     def request(method, *arguments)
