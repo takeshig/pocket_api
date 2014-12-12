@@ -11,11 +11,9 @@ module PocketApi
 
   class <<self
     attr_accessor :client_key
-    attr_accessor :access_token
 
     def configure(credentials={})
       @client_key   = credentials[:client_key]
-      @access_token = credentials[:access_token]
     end
 
     # Retrieve API
@@ -47,8 +45,8 @@ module PocketApi
     # * since - timestamp of modifed items after a date
     # * count - limit of items to return
     # * offset - Used only with count; start returning from offset position of results
-    def retrieve(options={})
-      response = request(:get, "/v3/get", {:body => options})
+    def retrieve(access_token, options={})
+      response = request(access_token, :get, "/v3/get", {:body => options})
       response
     end
 
@@ -57,8 +55,8 @@ module PocketApi
     # * title
     # * tags - comma-seperated list of tags
     # * tweet_id - Twitter tweet_id
-    def add(url, options={})
-      request(:post, '/v3/add', :body => {:url => url}.merge(options))
+    def add(access_token, url, options={})
+      request(access_token, :post, '/v3/add', :body => {:url => url}.merge(options))
     end
 
     # Modify API
@@ -74,18 +72,18 @@ module PocketApi
     # * tags_replace
     # * tags_clear
     # * tags_rename
-    def modify(action, options={})
-      request(:post, '/v3/send', :body => {:action => action}.merge(options))
+    def modify(access_token, action, options={})
+      request(access_token, :post, '/v3/send', :body => {:action => action}.merge(options))
     end
 
-    def multi_modify(actions)
-      request(:post, '/v3/send', :body => {:actions => actions})
+    def multi_modify(access_token, actions)
+      request(access_token, :post, '/v3/send', :body => {:actions => actions})
     end
 
-    def request(method, *arguments)
+    def request(access_token, method, *arguments)
       arguments[1] ||= {}
       arguments[1][:body] ||= {}
-      arguments[1][:body] = MultiJson.dump(arguments[1][:body].merge({:consumer_key => @client_key, :access_token => @access_token}))
+      arguments[1][:body] = MultiJson.dump(arguments[1][:body].merge({:consumer_key => @client_key, :access_token => access_token}))
       response = Connection.__send__(method.downcase.to_sym, *arguments)
 
       error_message = ''
